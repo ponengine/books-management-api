@@ -1,16 +1,22 @@
 package books_management.api.service;
 
 import books_management.api.dto.common.BaseResponse;
+import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
+import books_management.api.entity.Book;
 import books_management.api.repository.BooksRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.sql.Date;
 import java.util.List;
 
 @Service
 public class BooksServiceImpl implements  BooksService {
-
+    private static final Logger logger = LoggerFactory.getLogger(BooksServiceImpl.class);
     private final BooksRepository booksRepository;
 
     public BooksServiceImpl(BooksRepository booksRepository) {
@@ -19,18 +25,60 @@ public class BooksServiceImpl implements  BooksService {
 
     @Override
     public ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> getAllBooksByAuthor(String authorName) {
-        String validationError = validateAuthorName(authorName);
+        var validationError = validateAuthorName(authorName);
+
         if (validationError != null) {
+            logger.error("Validation failed for authorName={}: {}", authorName, validationError);
             return ResponseEntity.badRequest().body(new BaseResponse<>(null, false, validationError));
         }
         try{
             List<GetAllBooksResponse> books=booksRepository.findByAuthorName(authorName);
+            logger.info("Found {} books for authorName={}", books.size(), authorName);
             return ResponseEntity.ok(new BaseResponse<>(books, true, null));
         }catch (Exception ex){
+            logger.error("Error retrieving books by author: {}", ex.getMessage());
             throw ex;
         }
     }
 
+    @Override
+    public ResponseEntity<BaseResponse<String>> createBook(CreateBookRequest createBookRequest) {
+        try{
+            if (booksRepository.existsByTitle(createBookRequest.getTitle())) {
+                logger.error("Book creation failed: duplicate title={}", createBookRequest.getTitle());
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(new BaseResponse<>(null, false, "Book already exists"));
+            }
+            var book = new Book().builder()
+                    .title(createBookRequest.getTitle())
+                    .author(createBookRequest.getAuthor())
+                    .publishedDate(transformThaiYearToUSYear(createBookRequest.getPublishedDate()))
+                    .createdBy(createBookRequest.getCreatedBy()).build();
+            booksRepository.save(book);
+            logger.info("Book created: title={}, author={}",
+                    createBookRequest.getTitle(), createBookRequest.getAuthor());
+            return ResponseEntity.ok(new BaseResponse<>("Book created successfully", true, null));
+        }catch (Exception ex){
+            logger.error("Error creating book: {}", ex.getMessage());
+            throw ex;
+        }
+    }
+
+
+
+    private Date transformThaiYearToUSYear(String thaiDateStr) {
+        if (thaiDateStr == null || thaiDateStr.isEmpty()) return null;
+        try {
+            String[] parts = thaiDateStr.split("-");
+            int thaiYear = Integer.parseInt(parts[0]);
+            int usYear = thaiYear > 1000 ? thaiYear - 543 : thaiYear;
+            var usDateStr = usYear + "-" + parts[1] + "-" + parts[2];
+            return java.sql.Date.valueOf(usDateStr);
+        } catch (Exception e) {
+            logger.error("Error transforming date: {} → {}", thaiDateStr, e.getMessage());
+            throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd.");
+        }
+    }
 
     private String validateAuthorName(String authorName) {
         if (authorName == null || authorName.trim().isEmpty()) {

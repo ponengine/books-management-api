@@ -1,5 +1,6 @@
 package books_management.api.service;
 
+import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
 import books_management.api.repository.BooksRepository;
 import jakarta.inject.Inject;
@@ -72,5 +73,47 @@ class BooksServiceImplTest {
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
         org.mockito.Mockito.when(booksRepository.findByAuthorName("Error")).thenThrow(new RuntimeException("DB error"));
         assertThrows(RuntimeException.class, () -> service.getAllBooksByAuthor("Error"));
+    }
+
+
+    @Test
+    void createBook_whenExceptionThrown_throwsException() {
+        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("Test Book");
+        org.mockito.Mockito.when(booksRepository.existsByTitle("Test Book")).thenThrow(new RuntimeException("DB error"));
+        assertThrows(RuntimeException.class, () -> service.createBook(request));
+    }
+
+    @Test
+    void createBook_whenDuplicateFound_returnsConflict() {
+        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("Duplicate Book");
+        org.mockito.Mockito.when(booksRepository.existsByTitle("Duplicate Book")).thenReturn(true);
+
+        var response = service.createBook(request);
+        assertEquals(409, response.getStatusCodeValue());
+        assertFalse(response.getBody().isStatus());
+        assertEquals("Book already exists", response.getBody().getError());
+    }
+
+    @Test
+    void createBook_whenSuccess_returnsOk() {
+        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("New Book");
+        request.setAuthor("Author");
+        request.setPublishedDate("2567-01-01");
+        request.setCreatedBy("admin");
+        org.mockito.Mockito.when(booksRepository.existsByTitle("New Book")).thenReturn(false);
+
+        var response = service.createBook(request);
+        assertEquals(200, response.getStatusCodeValue());
+        assertTrue(response.getBody().isStatus());
+        assertEquals("Book created successfully", response.getBody().getData());
     }
 }
