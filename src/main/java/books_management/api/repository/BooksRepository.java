@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface BooksRepository extends JpaRepository<Book,Integer> {
     @Query(nativeQuery = true,
@@ -15,4 +14,6 @@ public interface BooksRepository extends JpaRepository<Book,Integer> {
                     "FROM book b " +
                     "WHERE b.author = :author")
     List<GetAllBooksResponse> findByAuthorName(@Param("author") String author);
+
+    boolean existsByTitle(String title);
 }

@@ -12,7 +12,7 @@
 ### Initiate Database
 #### run docker compose
 ```bash
-docker-compose docker-compose-init-db.yml up -d
+docker-compose -f docker-compose-init-db.yml up -d
 ```
 
 ### Swagger Documentation
@@ -20,6 +20,6 @@ docker-compose docker-compose-init-db.yml up -d
 
 #### run the application
 ```bash
-docker-compose up -d
+docker-compose up -d --build
 ```
 

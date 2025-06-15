@@ -6,11 +6,11 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
-import java.time.LocalDate;
+import java.sql.Date;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "book")
+@Table(name = "book", uniqueConstraints = @UniqueConstraint(columnNames = {"title"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,7 +26,7 @@ public class Book {
     @Column(nullable = false, length = 150)
     private String author;
 
-    private LocalDate publishedDate;
+    private Date publishedDate;
 
     @Column(length = 100)
     private String createdBy;
