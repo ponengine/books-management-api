@@ -8,6 +8,7 @@
 - Swagger
 - Spring validation
 - Spring Web
+- Testcontainers
 
 ### Initiate Database
 #### run docker compose
@@ -22,4 +23,18 @@ docker-compose -f docker-compose-init-db.yml up -d
 ```bash
 docker-compose up -d --build
 ```
+
+### Run Unit Tests
+```bash
+mvn test
+```
+
+### Run Integration Tests
+```bash
+mvn verify 
+```
+
+### Spec Api Document 
+- [Books Management API Specification](https://docs.google.com/document/d/1J-M1V3XI6w_no2W41_8mOP8JAW-GZfOUJg-r_J-RGKE/edit?tab=t.0)
+
 

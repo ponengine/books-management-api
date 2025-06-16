@@ -21,4 +21,14 @@ public class GetAllBooksResponse {
         this.author = author;
         this.publishedDate = publishedDate;
     }
+
+    @Override
+    public String toString() {
+        return "GetAllBooksResponse{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", publishedDate=" + publishedDate +
+                '}';
+    }
 }

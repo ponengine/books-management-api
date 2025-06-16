@@ -3,7 +3,7 @@ package books_management.api.service;
 import books_management.api.dto.common.BaseResponse;
 import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
-import books_management.api.entity.Book;
+import books_management.api.entity.Books;
 import books_management.api.repository.BooksRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +49,11 @@ public class BooksServiceImpl implements  BooksService {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(new BaseResponse<>(null, false, "Book already exists"));
             }
-            var book = new Book().builder()
+            var book = new Books().builder()
                     .title(createBookRequest.getTitle())
                     .author(createBookRequest.getAuthor())
                     .publishedDate(transformThaiYearToUSYear(createBookRequest.getPublishedDate()))
+                    .isActive(true)
                     .createdBy(createBookRequest.getCreatedBy()).build();
             booksRepository.save(book);
             logger.info("Book created: title={}, author={}",

@@ -30,7 +30,7 @@ public class PreFilter implements Filter {
         try {
             chain.doFilter(request, response);
         } finally {
-            MDC.remove(TRACE_ID_KEY); // ล้าง context หลังจบ request
+            MDC.remove(TRACE_ID_KEY);
         }
     }
 }
