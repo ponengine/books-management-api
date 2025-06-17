@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: books-management-api
     volumes:
-      - ./log-data:/logs
+      - ./log-data:/app/logs
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/bookdb?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: bookuser
