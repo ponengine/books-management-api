@@ -1,19 +1,20 @@
 package books_management.api.dto.get_all_book.response;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Date;
 
 @Getter
 @Setter
-@NoArgsConstructor
 public class GetAllBooksResponse {
     private Integer id;
     private String title;
     private String author;
     private Date publishedDate;
+
+    public GetAllBooksResponse() {
+    }
 
     public GetAllBooksResponse(Integer id, String title, String author, Date publishedDate) {
         this.id = id;

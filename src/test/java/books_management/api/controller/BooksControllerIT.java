@@ -3,6 +3,7 @@ package books_management.api.controller;
 import books_management.api.dto.common.BaseResponse;
 import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
+import books_management.api.dto.get_all_book.response.PageResponse;
 import books_management.api.repository.BooksRepository;
 import books_management.api.service.BooksService;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +22,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,7 +41,8 @@ class BooksControllerIT  {
     public static MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName("testdb")
             .withUsername("testuser")
-            .withPassword("testpass");
+            .withPassword("testpass")
+            .withInitScript("initdb/init.sql");
 
     @DynamicPropertySource
     static void registerMySQLProperties(DynamicPropertyRegistry registry) {
@@ -50,7 +51,7 @@ class BooksControllerIT  {
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
 
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MySQL8Dialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
+
     }
     @BeforeEach
     void setup() {
@@ -63,19 +64,24 @@ class BooksControllerIT  {
     }
     @Test
     void testGetBooksByAuthor() {
-
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("Duplicate Book");
+        request.setAuthor("Author");
+        request.setPublishedDate("2566-06-15");
+        request.setCreatedBy("tester");
+        booksService.createBook(request);
         String author = "Author";
         String url = "http://localhost:" + port + "/v1/books?author=" +
                 URLEncoder.encode(author, StandardCharsets.UTF_8);
 
-        ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> response = restTemplate.exchange(
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<BaseResponse<List<GetAllBooksResponse>>>(){});
+                new ParameterizedTypeReference<BaseResponse<PageResponse<GetAllBooksResponse>>>(){});
                 assertTrue(response.getBody().isStatus());
-                assertEquals("Author", response.getBody().getData().get(0).getAuthor());
-                assertEquals("Duplicate Book", response.getBody().getData().get(0).getTitle());
+                assertEquals("Author", response.getBody().getData().content().get(0).getAuthor());
+                assertEquals("Duplicate Book", response.getBody().getData().content().get(0).getTitle());
     }
 
     @Test
@@ -85,14 +91,14 @@ class BooksControllerIT  {
         String url = "http://localhost:" + port + "/v1/books?author=" +
                 URLEncoder.encode(author, StandardCharsets.UTF_8);
 
-        ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> response = restTemplate.exchange(
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<BaseResponse<List<GetAllBooksResponse>>>(){});
+                new ParameterizedTypeReference<BaseResponse<PageResponse<GetAllBooksResponse>>>(){});
         assertTrue(response.getBody().isStatus());
         assertNull(response.getBody().getError());
-        assertTrue(response.getBody().getData().isEmpty());
+        assertTrue(response.getBody().getData().content().isEmpty());
 
     }
 
@@ -181,6 +187,38 @@ class BooksControllerIT  {
                 HttpMethod.POST,
                 entity,
                 new ParameterizedTypeReference<BaseResponse<String>>(){});
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isStatus());
+        assertNotNull(response.getBody().getError());
+    }
+
+    @Test
+    void testGetBooksByAuthorWithInvalidPageSize() {
+        String author = "Author";
+        String url = "http://localhost:" + port + "/v1/books?author=" +
+                URLEncoder.encode(author, StandardCharsets.UTF_8) + "&page=0&size=11";
+
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<BaseResponse<PageResponse<GetAllBooksResponse>>>(){});
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isStatus());
+        assertNotNull(response.getBody().getError());
+    }
+
+    @Test
+    void testGetBooksByAuthorWithInvalidPageNumber() {
+        String author = "Author";
+        String url = "http://localhost:" + port + "/v1/books?author=" +
+                URLEncoder.encode(author, StandardCharsets.UTF_8) + "&page=-1&size=5";
+
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<BaseResponse<PageResponse<GetAllBooksResponse>>>(){});
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertFalse(response.getBody().isStatus());
         assertNotNull(response.getBody().getError());

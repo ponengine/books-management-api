@@ -12,9 +12,9 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Book Management API")
+                        .title("Books Management API")
                         .version("1.0.0")
-                        .description("API documentation for Book Management API"));
+                        .description("API documentation for Books Management API"));
     }
     @Bean
     public GroupedOpenApi publicApi() {

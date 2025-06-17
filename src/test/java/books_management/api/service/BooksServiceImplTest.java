@@ -7,8 +7,13 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,10 +27,10 @@ class BooksServiceImplTest {
     private BooksServiceImpl booksService;
     @Test
     void getAllBooksByAuthor_whenAuthorNameIsEmpty_returnsBadRequest() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
 
-        var response = service.getAllBooksByAuthor("");
+        var response = service.getAllBooksByAuthor("", 0, 5);
         assertEquals(400, response.getStatusCodeValue());
         assertFalse(response.getBody().isStatus());
         assertEquals("Author name is required", response.getBody().getError());
@@ -33,10 +38,10 @@ class BooksServiceImplTest {
 
     @Test
     void getAllBooksByAuthor_whenAuthorNameIsLessThan3_returnsBadRequest() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
 
-        var response = service.getAllBooksByAuthor("ab");
+        var response = service.getAllBooksByAuthor("ab", 0, 5);
         assertEquals(400, response.getStatusCodeValue());
         assertFalse(response.getBody().isStatus());
         assertEquals("Author name must be at least 3 characters long", response.getBody().getError());
@@ -44,55 +49,60 @@ class BooksServiceImplTest {
 
     @Test
     void getAllBooksByAuthor_whenSuccess_returnsBooks() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
-        List<GetAllBooksResponse> books = java.util.List.of(new GetAllBooksResponse());
-        org.mockito.Mockito.when(booksRepository.findByAuthorName("John Doe")).thenReturn(books);
+        List<GetAllBooksResponse> books =List.of(new GetAllBooksResponse());
+        Pageable pageable = Pageable.ofSize(5).withPage(0);
+        Page<GetAllBooksResponse> page = new PageImpl<>(books, pageable, books.size());
+        Mockito.when(booksRepository.findByAuthorName("John Doe",pageable)).thenReturn(page);
 
-        var response = service.getAllBooksByAuthor("John Doe");
+        var response = service.getAllBooksByAuthor("John Doe", 0, 5);
         assertEquals(200, response.getStatusCodeValue());
         assertTrue(response.getBody().isStatus());
-        assertEquals(books, response.getBody().getData());
+        assertEquals(books, response.getBody().getData().content());
     }
 
     @Test
     void getAllBooksByAuthor_whenSuccessNoData_returnsEmptyList() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        Pageable pageable = Pageable.ofSize(5).withPage(0);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
-        org.mockito.Mockito.when(booksRepository.findByAuthorName("Jane Doe")).thenReturn(java.util.Collections.emptyList());
+        Page<GetAllBooksResponse> page = new PageImpl<>(Collections.emptyList(), pageable, Collections.emptyList().size());
+        Mockito.when(booksRepository.findByAuthorName("Jane Doe",pageable)).thenReturn(page);
 
-        var response = service.getAllBooksByAuthor("Jane Doe");
+        var response = service.getAllBooksByAuthor("Jane Doe", 0, 5);
         assertEquals(200, response.getStatusCodeValue());
         assertTrue(response.getBody().isStatus());
-        assertTrue(response.getBody().getData().isEmpty());
+        assertTrue(response.getBody().getData().content().isEmpty());
     }
 
     @Test
     void getAllBooksByAuthor_whenExceptionThrown_throwsException() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        Pageable pageable = Pageable.ofSize(5).withPage(0);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
-        org.mockito.Mockito.when(booksRepository.findByAuthorName("Error")).thenThrow(new RuntimeException("DB error"));
-        assertThrows(RuntimeException.class, () -> service.getAllBooksByAuthor("Error"));
+        Mockito.when(booksRepository.findByAuthorName("Error",pageable)).thenThrow(new RuntimeException("DB error"));
+        assertThrows(RuntimeException.class, () -> service.getAllBooksByAuthor("Error", 0, 5));
     }
 
 
     @Test
     void createBook_whenExceptionThrown_throwsException() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
         CreateBookRequest request = new CreateBookRequest();
         request.setTitle("Test Book");
-        org.mockito.Mockito.when(booksRepository.existsByTitle("Test Book")).thenThrow(new RuntimeException("DB error"));
+        Mockito.when(booksRepository.existsByTitle("Test Book")).thenThrow(new RuntimeException("DB error"));
         assertThrows(RuntimeException.class, () -> service.createBook(request));
     }
 
     @Test
     void createBook_whenDuplicateFound_returnsConflict() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
         CreateBookRequest request = new CreateBookRequest();
         request.setTitle("Duplicate Book");
-        org.mockito.Mockito.when(booksRepository.existsByTitle("Duplicate Book")).thenReturn(true);
+        Mockito.when(booksRepository.existsByTitle("Duplicate Book")).thenReturn(true);
 
         var response = service.createBook(request);
         assertEquals(409, response.getStatusCodeValue());
@@ -102,18 +112,42 @@ class BooksServiceImplTest {
 
     @Test
     void createBook_whenSuccess_returnsOk() {
-        BooksRepository booksRepository = org.mockito.Mockito.mock(BooksRepository.class);
+        booksRepository = Mockito.mock(BooksRepository.class);
         BooksServiceImpl service = new BooksServiceImpl(booksRepository);
         CreateBookRequest request = new CreateBookRequest();
         request.setTitle("New Book");
         request.setAuthor("Author");
         request.setPublishedDate("2567-01-01");
         request.setCreatedBy("admin");
-        org.mockito.Mockito.when(booksRepository.existsByTitle("New Book")).thenReturn(false);
+        Mockito.when(booksRepository.existsByTitle("New Book")).thenReturn(false);
 
         var response = service.createBook(request);
         assertEquals(200, response.getStatusCodeValue());
         assertTrue(response.getBody().isStatus());
         assertEquals("Book created successfully", response.getBody().getData());
+    }
+
+    @Test
+    void pageSizeValidation_whenPageIsNegative() {
+        booksRepository = Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.getAllBooksByAuthor("David",-1, 5);
+        });
+
+        assertEquals("Page number must be non-negative and size must be positive", exception.getMessage());
+    }
+
+    @Test
+    void pageSizeValidation_whenSizeIsZero() {
+        booksRepository = Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.getAllBooksByAuthor("David", 0, 0);
+        });
+
+        assertEquals("Page number must be non-negative and size must be positive", exception.getMessage());
     }
 }
