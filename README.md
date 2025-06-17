@@ -26,14 +26,19 @@
 
 ### Run Unit Tests
 ```bash
+->go to root directory
 ->mvn test
 ```
 
 ### Run Integration Tests
 ```bash
+->go to root directory
 ->mvn verify 
 ```
-
+### Logs
+```bash
+->/log-data/*
+```
 ### Spec Api Document 
 - [Books Management API Specification](https://docs.google.com/document/d/1J-M1V3XI6w_no2W41_8mOP8JAW-GZfOUJg-r_J-RGKE/edit?tab=t.0)
 
