@@ -3,16 +3,19 @@ package books_management.api.service;
 import books_management.api.dto.common.BaseResponse;
 import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
+import books_management.api.dto.get_all_book.response.PageResponse;
 import books_management.api.entity.Books;
 import books_management.api.repository.BooksRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.sql.Date;
-import java.util.List;
 
 @Service
 public class BooksServiceImpl implements  BooksService {
@@ -24,20 +27,41 @@ public class BooksServiceImpl implements  BooksService {
     }
 
     @Override
-    public ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> getAllBooksByAuthor(String authorName) {
+    public ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> getAllBooksByAuthor(String authorName, int page, int size) {
         var validationError = validateAuthorName(authorName);
-
+        validatePageSize(page, size);
+        Pageable pageable = PageRequest.of(page, size);
         if (validationError != null) {
             logger.error("Validation failed for authorName={}: {}", authorName, validationError);
             return ResponseEntity.badRequest().body(new BaseResponse<>(null, false, validationError));
         }
         try{
-            List<GetAllBooksResponse> books=booksRepository.findByAuthorName(authorName);
-            logger.info("Found {} books for authorName={}", books.size(), authorName);
-            return ResponseEntity.ok(new BaseResponse<>(books, true, null));
+            Page<GetAllBooksResponse> pageBook=booksRepository.findByAuthorName(authorName,pageable);
+            PageResponse<GetAllBooksResponse> pageResponse = new PageResponse<>(
+                    pageBook.getContent(),
+                    pageBook.getNumber(),
+                    pageBook.getSize(),
+                    pageBook.getTotalElements(),
+                    pageBook.getTotalPages()
+            );
+            logger.info("Found {} books for authorName={}", pageResponse.totalElements(), authorName);
+            return ResponseEntity.ok(new BaseResponse<>(pageResponse, true, null));
         }catch (Exception ex){
             logger.error("Error retrieving books by author: {}", ex.getMessage());
             throw ex;
+        }
+    }
+
+    private void validatePageSize(int page, int size) {
+        if (page < 0 || size <= 0) {
+            String errorMessage = "Page number must be non-negative and size must be positive";
+            logger.error("Validation failed: {}", errorMessage);
+            throw new IllegalArgumentException(errorMessage);
+        }
+        if (size > 10) {
+            String errorMessage = "Size must not exceed 10";
+            logger.error("Validation failed: {}", errorMessage);
+            throw new IllegalArgumentException(errorMessage);
         }
     }
 

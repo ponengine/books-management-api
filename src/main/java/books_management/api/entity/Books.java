@@ -10,7 +10,7 @@ import java.sql.Date;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "book", uniqueConstraints = @UniqueConstraint(columnNames = {"title"}))
+@Table(name = "books", uniqueConstraints = @UniqueConstraint(columnNames = {"title"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

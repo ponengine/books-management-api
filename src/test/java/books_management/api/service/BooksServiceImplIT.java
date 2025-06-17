@@ -3,6 +3,7 @@ package books_management.api.service;
 import books_management.api.dto.common.BaseResponse;
 import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
+import books_management.api.dto.get_all_book.response.PageResponse;
 import books_management.api.repository.BooksRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,6 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -28,7 +27,8 @@ class BooksServiceImplIT {
     public static MySQLContainer<?> mysqlContainer = new MySQLContainer<>("mysql:8.0")
             .withDatabaseName("testdb")
             .withUsername("testuser")
-            .withPassword("testpass");
+            .withPassword("testpass")
+            .withInitScript("initdb/init.sql");
 
     @DynamicPropertySource
     static void registerMySQLProperties(DynamicPropertyRegistry registry) {
@@ -37,7 +37,6 @@ class BooksServiceImplIT {
         registry.add("spring.datasource.password", mysqlContainer::getPassword);
 
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.MySQL8Dialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     }
 
     @Autowired
@@ -72,12 +71,12 @@ class BooksServiceImplIT {
         request.setCreatedBy("tester");
         booksService.createBook(request);
 
-        ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> response = booksService.getAllBooksByAuthor("Test Author");
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response = booksService.getAllBooksByAuthor("Test Author", 0, 5);
 
         assertNotNull(response);
         assertTrue(response.getBody().isStatus());
-        assertFalse(response.getBody().getData().isEmpty());
-        assertEquals("Test Book 2", response.getBody().getData().get(0).getTitle());
+        assertFalse(response.getBody().getData().content().isEmpty());
+        assertEquals("Test Book 2", response.getBody().getData().content().get(0).getTitle());
     }
 
     @Test
@@ -113,11 +112,11 @@ class BooksServiceImplIT {
 
     @Test
     void shouldReturnEmptyListWhenAuthorNotFound() {
-        ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> response =
-                booksService.getAllBooksByAuthor("Unknown Author");
+        ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> response =
+                booksService.getAllBooksByAuthor("Unknown Author", 0, 5);
 
         assertNotNull(response);
         assertTrue(response.getBody().isStatus());
-        assertTrue(response.getBody().getData().isEmpty());
+        assertTrue(response.getBody().getData().content().isEmpty());
     }
 }

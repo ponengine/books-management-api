@@ -3,6 +3,7 @@ package books_management.api.controller;
 import books_management.api.dto.common.BaseResponse;
 import books_management.api.dto.create_book.request.CreateBookRequest;
 import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
+import books_management.api.dto.get_all_book.response.PageResponse;
 import books_management.api.service.BooksService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/v1")
@@ -39,9 +39,12 @@ public class BooksController {
                     content = @Content(schema = @Schema(implementation = BaseResponse.class))),
     })
     @GetMapping("/books")
-    public ResponseEntity<BaseResponse<List<GetAllBooksResponse>>> getAllBooksByAuthor(@RequestParam String author) {
-        logger.info("Received request to get all books by author: {}", author);
-        return booksService.getAllBooksByAuthor(author);
+    public ResponseEntity<BaseResponse<PageResponse<GetAllBooksResponse>>> getAllBooksByAuthor(
+            @RequestParam String author,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        logger.info("Received request to get all books by author: {}, page: {}, size: {}", author, page, size);
+        return booksService.getAllBooksByAuthor(author, page, size);
     }
 
     @Operation(
