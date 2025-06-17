@@ -9,29 +9,29 @@
 - Spring validation
 - Spring Web
 - Testcontainers
+### Swagger Documentation
+- OpenAPI 3.0 documentation is available at: [endpoint](http://localhost:8080/swagger-ui/index.html)
 
 ### Initiate Database
 #### run docker compose
 ```bash
-docker-compose -f docker-compose-init-db.yml up -d
+->go to root directory
+->docker-compose -f .\docker-compose-initdb.yml up -d
 ```
-
-### Swagger Documentation
-- OpenAPI 3.0 documentation is available at: [endpoint](http://localhost:8080/swagger-ui/index.html)
-
 #### run the application
 ```bash
-docker-compose up -d --build
+->go to root directory
+->docker-compose up -d --build
 ```
 
 ### Run Unit Tests
 ```bash
-mvn test
+->mvn test
 ```
 
 ### Run Integration Tests
 ```bash
-mvn verify 
+->mvn verify 
 ```
 
 ### Spec Api Document 
