@@ -1,0 +1,26 @@
+# Java
+*.class
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Build output
+/target/
+/build/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Testcontainers (Docker-related)
+**/.testcontainers/**
+
+# Application config (ถ้าคุณไม่อยาก push ไฟล์นี้ขึ้น)
+application-local.yml
+application-dev.yml
+.env
+
+HELP.md
