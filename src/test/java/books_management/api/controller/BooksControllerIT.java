@@ -223,5 +223,26 @@ class BooksControllerIT  {
         assertFalse(response.getBody().isStatus());
         assertNotNull(response.getBody().getError());
     }
+    @Test
+    void testCreateBookWithWrongDate() {
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("Future Book");
+        request.setAuthor("Author");
+        request.setPublishedDate("256-06-15");
+        request.setCreatedBy("tester");
+        String url = "http://localhost:" + port + "/v1/books";
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<CreateBookRequest> entity = new HttpEntity<>(request, headers);
+        ResponseEntity<BaseResponse<String>> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                entity,
+                new ParameterizedTypeReference<BaseResponse<String>>(){});
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isStatus());
+    }
+
 
 }

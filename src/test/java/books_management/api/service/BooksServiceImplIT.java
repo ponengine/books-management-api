@@ -107,7 +107,7 @@ class BooksServiceImplIT {
             booksService.createBook(badDateRequest);
         });
 
-        assertEquals("Invalid date format. Expected yyyy-MM-dd.", exception.getMessage());
+        assertEquals("Date must be in the format yyyy-MM-dd", exception.getMessage());
     }
 
     @Test

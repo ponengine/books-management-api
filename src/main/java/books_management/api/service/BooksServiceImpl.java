@@ -6,6 +6,7 @@ import books_management.api.dto.get_all_book.response.GetAllBooksResponse;
 import books_management.api.dto.get_all_book.response.PageResponse;
 import books_management.api.entity.Books;
 import books_management.api.repository.BooksRepository;
+import books_management.api.utils.DateConversionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -14,8 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import java.sql.Date;
 
 @Service
 public class BooksServiceImpl implements  BooksService {
@@ -76,7 +75,7 @@ public class BooksServiceImpl implements  BooksService {
             var book = new Books().builder()
                     .title(createBookRequest.getTitle())
                     .author(createBookRequest.getAuthor())
-                    .publishedDate(transformThaiYearToUSYear(createBookRequest.getPublishedDate()))
+                    .publishedDate(DateConversionUtils.convertBuddhistToIso(createBookRequest.getPublishedDate()))
                     .isActive(true)
                     .createdBy(createBookRequest.getCreatedBy()).build();
             booksRepository.save(book);
@@ -89,21 +88,6 @@ public class BooksServiceImpl implements  BooksService {
         }
     }
 
-
-
-    private Date transformThaiYearToUSYear(String thaiDateStr) {
-        if (thaiDateStr == null || thaiDateStr.isEmpty()) return null;
-        try {
-            String[] parts = thaiDateStr.split("-");
-            int thaiYear = Integer.parseInt(parts[0]);
-            int usYear = thaiYear > 1000 ? thaiYear - 543 : thaiYear;
-            var usDateStr = usYear + "-" + parts[1] + "-" + parts[2];
-            return java.sql.Date.valueOf(usDateStr);
-        } catch (Exception e) {
-            logger.error("Error transforming date: {} → {}", thaiDateStr, e.getMessage());
-            throw new IllegalArgumentException("Invalid date format. Expected yyyy-MM-dd.");
-        }
-    }
 
     private String validateAuthorName(String authorName) {
         if (authorName == null || authorName.trim().isEmpty()) {
