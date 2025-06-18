@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 
-import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -26,7 +26,7 @@ public class Books {
     @Column(nullable = false, length = 150)
     private String author;
 
-    private Date publishedDate;
+    private LocalDate publishedDate;
 
     @Column(length = 100)
     private String createdBy;

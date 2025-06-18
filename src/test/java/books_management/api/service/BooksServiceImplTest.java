@@ -150,4 +150,20 @@ class BooksServiceImplTest {
 
         assertEquals("Page number must be non-negative and size must be positive", exception.getMessage());
     }
+
+    @Test
+    void createBook_whenWrongDate_returnError() {
+        booksRepository = Mockito.mock(BooksRepository.class);
+        BooksServiceImpl service = new BooksServiceImpl(booksRepository);
+        CreateBookRequest request = new CreateBookRequest();
+        request.setTitle("New Book");
+        request.setAuthor("Author");
+        request.setPublishedDate("256-01-01");
+        request.setCreatedBy("admin");
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.createBook(request);
+        });
+        assertEquals("Year must be in the Thai Buddhist calendar (e.g. 2568)", exception.getMessage());
+    }
 }
